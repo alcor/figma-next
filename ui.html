@@ -1,0 +1,60 @@
+<div class="buttons">
+  <div class="button" id="prev">
+    <svg xmlns="http://www.w3.org/2000/svg" width="35" height="40" fill="currentColor" viewBox="0 0 35 40"><g clip-path="url(#a)"><path d="M14.293 19.293a1 1 0 0 0 0 1.414l6.364 6.364a1 1 0 0 0 1.414-1.414L16.414 20l5.657-5.657a1 1 0 0 0-1.414-1.414l-6.364 6.364Zm41.414 1.414a1 1 0 0 0 0-1.414l-6.364-6.364a1 1 0 0 0-1.414 1.414L53.586 20l-5.657 5.657a1 1 0 0 0 1.414 1.414l6.364-6.364ZM15 21h40v-2H15v2Z"/></g><defs><clipPath id="a"><path d="M0 0h35v40H0z"/></clipPath></defs></svg>
+  </div>
+  <!-- <div class="button" id="menu">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="40" fill="none" viewBox="0 0 22 40"><g clip-path="url(#a)"><path stroke="#fff" d="M6 16h10M6 24h10M6 20h10m-22 0H8m7 0h14"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h22v40H0z"/></clipPath></defs></svg>
+  </div> -->
+  <div class="button" id="next">
+    <svg xmlns="http://www.w3.org/2000/svg" width="35" height="40" fill="currentColor" viewBox="0 0 35 40"><g clip-path="url(#a)"><path d="M-20.707 19.293a1 1 0 0 0 0 1.414l6.364 6.364a1 1 0 0 0 1.414-1.414L-18.586 20l5.657-5.657a1 1 0 0 0-1.414-1.414l-6.364 6.364Zm41.414 1.414a1 1 0 0 0 0-1.414l-6.364-6.364a1 1 0 0 0-1.414 1.414L18.586 20l-5.657 5.657a1 1 0 0 0 1.414 1.414l6.364-6.364ZM-20 21h40v-2h-40v2Z"/></g><defs><clipPath id="a"><path d="M0 0h35v40H0z"/></clipPath></defs></svg>
+  </div>
+</div>
+<style>
+  body {
+    margin:0; padding:0;
+  }
+  .buttons {
+        display:flex;
+  }
+  .button {
+    width:35px;
+    height:40px;
+    display:flex;
+    text-align:center;
+    cursor:pointer;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .button svg {
+    width:35px;
+    height:40px;
+    fill:var(--figma-color-text);
+  }
+  .button:hover {
+    background-color:var(--figma-color-bg-hover);
+  }
+
+</style>
+
+<script>
+function prev(e) {
+  parent.postMessage({ pluginMessage: { type: 'prev', event:{alt:e.altKey, ctrl:e.ctrlKey, shift:e.shiftKey}}}, '*')
+}
+
+function next(e) {
+  parent.postMessage({ pluginMessage: { type: 'next', event:{alt:e.altKey, ctrl:e.ctrlKey, shift:e.shiftKey}}}, '*')
+}
+function menu(e) {
+  parent.postMessage({ pluginMessage: { type: 'menu', event:{alt:e.altKey, ctrl:e.ctrlKey, shift:e.shiftKey}}}, '*')
+}
+
+document.getElementById('next').onclick = next;
+document.getElementById('prev').onclick = prev;
+// document.getElementById('menu').onclick = menu;
+
+document.addEventListener('keydown', function(e) {
+    if(e.keyCode == 37) { prev(e) }
+    else if(e.keyCode == 39) { next (e) }
+});
+</script>
