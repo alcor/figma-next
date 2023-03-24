@@ -8,6 +8,7 @@ var TransitionType;
     TransitionType[TransitionType["Passthrough"] = 1] = "Passthrough";
     TransitionType[TransitionType["Instant"] = 2] = "Instant";
 })(TransitionType || (TransitionType = {}));
+let figjam = figma.editorType === "figjam";
 function init() {
     let compact = true;
     figma.showUI(__html__, { visible: true, themeColors: true, width: 70, height: 40 });
@@ -39,17 +40,37 @@ function loadFrames() {
         return node.type === "VECTOR" && (node.name.toLowerCase() == "journey" || node.name.toLowerCase() == "camera");
     }).pop();
     let framesInfo = [];
+    let connectors = [];
+    let sections = [];
     function traverse(node) {
         for (const child of node.children) {
-            if (child.type == "FRAME") {
-                framesInfo.push({ node: child, rect: child.absoluteBoundingBox });
-            }
-            else if (child.type == "SECTION") {
-                traverse(child);
+            let type = child.type;
+            switch (child.type) {
+                case "FRAME":
+                case "SHAPE_WITH_TEXT":
+                case "STICKY":
+                case "FRAME":
+                    framesInfo.push({ node: child, rect: child.absoluteBoundingBox });
+                    break;
+                case "SECTION":
+                    if (figjam) {
+                        framesInfo.push({ node: child, rect: child.absoluteBoundingBox });
+                    }
+                    else {
+                        traverse(child);
+                    }
+                    sections.push(child);
+                    break;
+                case "CONNECTOR":
+                    connectors.push(child);
+                    break;
+                default:
+                    console.log("Unknown Type", type);
             }
         }
     }
     traverse(figma.currentPage);
+    console.log("connectors", connectors, sections, framesInfo, figma.currentPage);
     function sortFrames(a, b) {
         if (Math.abs(a.rect.y - b.rect.y) < Math.max(a.rect.height, b.rect.height) / 2) {
             return (a.rect.x - b.rect.x);

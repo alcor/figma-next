@@ -10,6 +10,8 @@ enum TransitionType {
 
 interface TargetRect { x: any; y: any; width?: any; height?: any; tangentStart?: any; tangentEnd?: any; }
 
+let figjam = figma.editorType === "figjam";
+
 function init() {
   let compact = true;
   figma.showUI(__html__, { visible: true, themeColors: true, width: 70, height: 40 });
@@ -48,18 +50,38 @@ function loadFrames() {
 
 
   let framesInfo: { node: any; rect: any; }[] = [];
+  let connectors: ConnectorNode[] = [];
+  let sections: SectionNode[] = [];
 
   function traverse(node: PageNode | SectionNode) {
     for (const child of node.children) {
-      if (child.type == "FRAME") {
-        framesInfo.push({node:child, rect:child.absoluteBoundingBox})
-      } else if (child.type == "SECTION") {
-        traverse(child)
-      }
-    }
+      let type = child.type;
+      switch(child.type) {
+        case "FRAME":
+        case "SHAPE_WITH_TEXT":
+        case "STICKY":
+        case "FRAME":
+          framesInfo.push({node:child, rect:child.absoluteBoundingBox});
+          break
+        case "SECTION":
+          if (figjam) {
+            framesInfo.push({node:child, rect:child.absoluteBoundingBox});
+          } else {
+            traverse(child as SectionNode)
+          }
+          sections.push(child as SectionNode)
+          break
+        case "CONNECTOR":
+          connectors.push(child as ConnectorNode)
+          break
+        default:
+          console.log("Unknown Type", type)
+        }
+    }  
   }
   
   traverse(figma.currentPage);
+  console.log("connectors", connectors, sections, framesInfo, figma.currentPage)
   
   function sortFrames(a: { node: any; rect: any; }, b: { node: any; rect: any; }) {
     if (Math.abs(a.rect.y - b.rect.y) < Math.max(a.rect.height, b.rect.height) / 2) {
@@ -74,7 +96,7 @@ function loadFrames() {
 
   currentIndex = -1
   currentFrame = undefined;
-  
+
   console.log("Loaded Frames", cameraFrames, cameraPath)
 
 }
