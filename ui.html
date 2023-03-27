@@ -1,25 +1,33 @@
+<meta viewport="width=70, initial-scale=1">
+<body class="">
+  <div id="progress"></div>
+  <div id="message"></div>
 <div class="buttons">
-  <div class="button" id="prev">
-    <svg xmlns="http://www.w3.org/2000/svg" width="35" height="40" fill="currentColor" viewBox="0 0 35 40"><g clip-path="url(#a)"><path d="M14.646 19.646a.5.5 0 0 0 0 .708l3.182 3.181a.5.5 0 1 0 .707-.707L15.707 20l2.828-2.828a.5.5 0 1 0-.707-.707l-3.182 3.181Zm40.708.708a.5.5 0 0 0 0-.707l-3.182-3.182a.5.5 0 1 0-.707.707L54.293 20l-2.828 2.828a.5.5 0 1 0 .707.707l3.182-3.181ZM15 20.5h20v-1H15v1Zm20 0h20v-1H35v1Z"/></g><defs><clipPath id="a"><path d="M0 0h35v40H0z"/></clipPath></defs></svg>
-
+  <div class="button sprite" id="prev">
   </div>
-  <!-- <div class="button" id="menu">
-<svg xmlns="http://www.w3.org/2000/svg" width="22" height="40" fill="none" viewBox="0 0 22 40"><g clip-path="url(#a)"><path stroke="#fff" d="M6 20h10m-22 0H8m7 0h14"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h22v40H0z"/></clipPath></defs></svg>
+  <!-- <div class="button sprite" id="menu">
   </div> -->
-  <div class="button" id="next">
-    <svg xmlns="http://www.w3.org/2000/svg" width="35" height="40" fill="currentColor" viewBox="0 0 35 40"><g clip-path="url(#a)"><path d="M-41.354 19.646a.5.5 0 0 0 0 .708l3.182 3.181a.5.5 0 1 0 .707-.707L-40.293 20l2.828-2.828a.5.5 0 1 0-.707-.707l-3.182 3.181Zm62.708.708a.5.5 0 0 0 0-.708l-3.182-3.181a.5.5 0 1 0-.707.707L20.293 20l-2.828 2.828a.5.5 0 1 0 .707.707l3.182-3.181ZM-41 20.5h62v-1h-62v1Z"/></g><defs><clipPath id="a"><path d="M0 0h35v40H0z"/></clipPath></defs></svg>
+  <div class="button sprite" id="next">
   </div>
 </div>
 <style>
+  body.unfocused:not(:hover) {
+    opacity:0.25;
+  }
   body {
-    margin:0; padding:0;
+    margin: 0 /*4px 2px*/; padding:0;
+    transition: opacity 200ms;
+    font-family:Inter, sans-serif;
+    font-size:11px;
+    display:flex;
+    flex-direction:column
   }
   .buttons {
-        display:flex;
+    display:flex;
   }
   .button {
-    width:35px;
-    height:40px;
+    width:36px;
+    height:36px;
     display:flex;
     text-align:center;
     cursor:pointer;
@@ -27,41 +35,267 @@
     align-items: center;
   }
 
+  
+  .sprite {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='72' fill='none' viewBox='0 0 180 72'%3E%3Cg clip-path='url(%23a)'%3E%3Cpath fill='%23000' fill-opacity='.9' d='m14 18-.354-.354a.5.5 0 0 0 0 .707L14 18Zm4.646 5.354a.5.5 0 0 0 .708-.708l-.708.708Zm.708-10a.5.5 0 0 0-.708-.708l.708.707ZM38 17.5H14v1h24v-1Zm-24.354.854 5 5 .708-.708-5-5-.708.707Zm.708 0 5-5-.708-.708-5 5 .708.707Z'/%3E%3C/g%3E%3Cg clip-path='url(%23b)'%3E%3Cpath stroke='%23000' stroke-linecap='round' stroke-opacity='.9' d='M14 54h43'/%3E%3C/g%3E%3Cg clip-path='url(%23c)'%3E%3Cpath stroke='%23000' stroke-opacity='.9' d='M34 18h40'/%3E%3C/g%3E%3Cg clip-path='url(%23d)'%3E%3Cpath fill='%23000' fill-opacity='.9' d='m94 18 .354.354a.5.5 0 0 0 0-.707L94 18Zm-4.646-5.354a.5.5 0 0 0-.708.708l.708-.708Zm-.708 10a.5.5 0 0 0 .708.708l-.708-.707ZM70 18.5h24v-1H70v1Zm24.354-.854-5-5-.708.708 5 5 .708-.707Zm-.708 0-5 5 .708.708 5-5-.708-.707Z'/%3E%3C/g%3E%3Cg clip-path='url(%23e)'%3E%3Cpath fill='%23000' fill-opacity='.9' d='M94.354 49.354a.5.5 0 0 0-.708-.708l.708.708Zm-.708 10a.5.5 0 0 0 .708-.707l-.708.707ZM70 54.5h19v-1H70v1Zm19.354-.146 5-5-.708-.708-5 5 .708.708Zm-.708 0 5 5 .708-.707-5-5-.708.707Z'/%3E%3C/g%3E%3Cg clip-path='url(%23f)'%3E%3Cpath fill='%23000' fill-opacity='.9' d='M56 49a.5.5 0 0 0-1 0h1Zm-1 10a.5.5 0 0 0 1 0h-1Zm-21-4.5h21.5v-1H34v1Zm22-.5v-5h-1v5h1Zm-1 0v5h1v-5h-1Z'/%3E%3C/g%3E%3Cpath stroke='%23000' stroke-linecap='round' stroke-opacity='.9' d='M153 54h7m7 0h-7m0 0v-7m0 7v7m-43-7h14'/%3E%3Cg clip-path='url(%23g)'%3E%3Cpath fill='%23000' fill-opacity='.9' d='m160 28-.354.354a.501.501 0 0 0 .708 0L160 28Zm5.354-4.646a.5.5 0 0 0-.708-.708l.708.708Zm-10-.708a.501.501 0 0 0-.708.708l.708-.708ZM160 18h.5a.5.5 0 0 0-.5-.5v.5Zm.354 10.354 5-5-.708-.708-5 5 .708.708Zm0-.707-5-5-.708.707 5 5 .708-.707ZM144 18.5h16v-1h-16v1Zm15.5-.5v10h1V18h-1Z'/%3E%3C/g%3E%3Cg clip-path='url(%23h)'%3E%3Cpath fill='%23000' fill-opacity='.9' d='m124 8-.354-.354a.5.5 0 0 1 .708 0L124 8Zm5.354 4.646a.5.5 0 0 1-.708.708l.708-.708Zm-10 .708a.501.501 0 0 1-.708-.708l.708.708ZM124 18h.5a.5.5 0 0 1-.5.5V18Zm.354-10.354 5 5-.708.708-5-5 .708-.708Zm0 .708-5 5-.708-.708 5-5 .708.708ZM108 17.5h16v1h-16v-1Zm15.5.5V8h1v10h-1Z'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='a'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='rotate(180 18 18)'/%3E%3C/clipPath%3E%3CclipPath id='b'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='translate(0 36)'/%3E%3C/clipPath%3E%3CclipPath id='c'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='translate(36)'/%3E%3C/clipPath%3E%3CclipPath id='d'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='translate(72)'/%3E%3C/clipPath%3E%3CclipPath id='e'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='translate(72 36)'/%3E%3C/clipPath%3E%3CclipPath id='f'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='translate(36 36)'/%3E%3C/clipPath%3E%3CclipPath id='g'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='rotate(90 90 90)'/%3E%3C/clipPath%3E%3CclipPath id='h'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='rotate(-90 72 -36)'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E ");
+
+  }
+html.figma-dark .sprite {
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='72' fill='none' viewBox='0 0 180 72'%3E%3Cg clip-path='url(%23a)'%3E%3Cpath fill='%23fff' fill-opacity='.9' d='m14 18-.354-.354a.5.5 0 0 0 0 .707L14 18Zm4.646 5.354a.5.5 0 0 0 .708-.708l-.708.708Zm.708-10a.5.5 0 0 0-.708-.708l.708.707ZM38 17.5H14v1h24v-1Zm-24.354.854 5 5 .708-.708-5-5-.708.707Zm.708 0 5-5-.708-.708-5 5 .708.707Z'/%3E%3C/g%3E%3Cg clip-path='url(%23b)'%3E%3Cpath stroke='%23fff' stroke-linecap='round' stroke-opacity='.9' d='M14 54h43'/%3E%3C/g%3E%3Cg clip-path='url(%23c)'%3E%3Cpath stroke='%23fff' stroke-opacity='.9' d='M34 18h40'/%3E%3C/g%3E%3Cg clip-path='url(%23d)'%3E%3Cpath fill='%23fff' fill-opacity='.9' d='m94 18 .354.354a.5.5 0 0 0 0-.707L94 18Zm-4.646-5.354a.5.5 0 0 0-.708.708l.708-.708Zm-.708 10a.5.5 0 0 0 .708.708l-.708-.707ZM70 18.5h24v-1H70v1Zm24.354-.854-5-5-.708.708 5 5 .708-.707Zm-.708 0-5 5 .708.708 5-5-.708-.707Z'/%3E%3C/g%3E%3Cg clip-path='url(%23e)'%3E%3Cpath fill='%23fff' fill-opacity='.9' d='M94.354 49.354a.5.5 0 0 0-.708-.708l.708.708Zm-.708 10a.5.5 0 0 0 .708-.707l-.708.707ZM70 54.5h19v-1H70v1Zm19.354-.146 5-5-.708-.708-5 5 .708.708Zm-.708 0 5 5 .708-.707-5-5-.708.707Z'/%3E%3C/g%3E%3Cg clip-path='url(%23f)'%3E%3Cpath fill='%23fff' fill-opacity='.9' d='M56 49a.5.5 0 0 0-1 0h1Zm-1 10a.5.5 0 0 0 1 0h-1Zm-21-4.5h21.5v-1H34v1Zm22-.5v-5h-1v5h1Zm-1 0v5h1v-5h-1Z'/%3E%3C/g%3E%3Cpath stroke='%23fff' stroke-linecap='round' stroke-opacity='.9' d='M153 54h7m7 0h-7m0 0v-7m0 7v7m-43-7h14'/%3E%3Cg clip-path='url(%23g)'%3E%3Cpath fill='%23fff' fill-opacity='.9' d='m160 28-.354.354a.501.501 0 0 0 .708 0L160 28Zm5.354-4.646a.5.5 0 0 0-.708-.708l.708.708Zm-10-.708a.501.501 0 0 0-.708.708l.708-.708ZM160 18h.5a.5.5 0 0 0-.5-.5v.5Zm.354 10.354 5-5-.708-.708-5 5 .708.708Zm0-.707-5-5-.708.707 5 5 .708-.707ZM144 18.5h16v-1h-16v1Zm15.5-.5v10h1V18h-1Z'/%3E%3C/g%3E%3Cg clip-path='url(%23h)'%3E%3Cpath fill='%23fff' fill-opacity='.9' d='m124 8-.354-.354a.5.5 0 0 1 .708 0L124 8Zm5.354 4.646a.5.5 0 0 1-.708.708l.708-.708Zm-10 .708a.501.501 0 0 1-.708-.708l.708.708ZM124 18h.5a.5.5 0 0 1-.5.5V18Zm.354-10.354 5 5-.708.708-5-5 .708-.708Zm0 .708-5 5-.708-.708 5-5 .708.708ZM108 17.5h16v1h-16v-1Zm15.5.5V8h1v10h-1Z'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='a'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='rotate(180 18 18)'/%3E%3C/clipPath%3E%3CclipPath id='b'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='translate(0 36)'/%3E%3C/clipPath%3E%3CclipPath id='c'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='translate(36)'/%3E%3C/clipPath%3E%3CclipPath id='d'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='translate(72)'/%3E%3C/clipPath%3E%3CclipPath id='e'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='translate(72 36)'/%3E%3C/clipPath%3E%3CclipPath id='f'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='translate(36 36)'/%3E%3C/clipPath%3E%3CclipPath id='g'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='rotate(90 90 90)'/%3E%3C/clipPath%3E%3CclipPath id='h'%3E%3Cpath fill='%23fff' d='M0 0h36v36H0z' transform='rotate(-90 72 -36)'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");  
+}
+
+  .sprite#prev {
+    background-position: 0 0;
+  }
+  .sprite#prev:hover {
+    background-position: 0px 0;
+  }
+  .sprite#prev:active,
+  .sprite#prev.active {
+    background-position: -1px 0;
+    transition:background-position 0ms;
+  }
+
+  /* body.atStart .sprite#prev:not(:hover) {
+    background-position: 0px -36px;
+  } */
+
+  .sprite#next {
+    background-position: -72px 0;
+  }
+
+  .sprite#next:active,
+  .sprite#next.active {
+    background-position: -71px 0;
+    transition:background-position 0ms;
+  }
+  .sprite#next.alt {
+    background-position: -120px 0;
+    transition:background-position 0ms;
+  }
+
+  body.down .sprite#next {
+    background-position: -144px 0;
+  }
+  body.up .sprite#next {
+    background-position: -108px 0;
+  }
+  body.zoomin .sprite#next {
+    background-position: -144px -36px;
+  }
+  body.zoomout .sprite#prev {
+    background-position: -108px -36px;
+  }
+
+  /* body.atEnd .sprite#next {
+    background-position: -72px -36px;
+  } */
+  body.pastEnd .sprite#next {
+    background-position: -72px -36px;
+  }
+  .sprite.static,
+  body.pastEnd .sprite {
+    transition:background-position 0ms;
+  }
+
+  .sprite#menu {
+    background-position: -36px 0;
+  }
+  .sprite#menu:hover {
+    background-position: -120px 0;
+  }
+
   .button svg {
-    width:35px;
-    height:40px;
+    width:36px;
+    height:36px;
     fill:var(--figma-color-text);
   }
   .button:hover {
     background-color:var(--figma-color-bg-hover);    
   }
 
-  .button:active {
+  .button:active,
+  .button.active {
     background-color:var(--figma-color-bg-pressed);    
+  }
+
+  #progress {
+    background: var(--figma-color-text);
+    position:fixed;
+    top:0;
+    left:0;
+    height:2px;
+    display:none;
+  }
+
+  #message {
+    background: var(--figma-color-bg-hover);
+    color: var(--figma-color-text);
+    position:absoute;
+    margin: 2px 2px;
+    width:auto;
+    border-radius:3px;
+    text-align:center;
+    line-height: 32px;
+  }
+  #message:empty {
+    display:none;
   }
 
 </style>
 
 <script>
 
-function postMessage(type, e) {
+function post(type, e, direction) {
   parent.postMessage({ pluginMessage: { 
     type, 
     event:{alt:e.altKey, ctrl:e.ctrlKey, shift:e.shiftKey},
+    direction,
     time: new Date().getTime()
   }}, '*')
 }
 
-function prev(e) { postMessage('prev', e) }
-function next(e) { postMessage('next', e) }
-function menu(e) { postMessage('menu', e) }
+onmessage = (event) => {
+  let msg = event.data.pluginMessage;
+  console.log("From Plugin:", event.data.pluginMessage)
 
-document.getElementById('next').onclick = next;
-document.getElementById('prev').onclick = prev;
+  document.body.classList.toggle("atEnd", msg.atEnd)
+  document.body.classList.toggle("atStart", msg.atStart)
+  document.body.classList.toggle("pastEnd", msg.pastEnd)
+
+  if (msg.length) {
+    document.getElementById('progress').style.width = (msg.index / (msg.length / 1)) * 100 + "%";
+  }
+  // if (msg.atEnd) {
+  //   document.getElementById('next').classList.add('alt');
+  // } else {
+  //   document.getElementById('next').classList.add('static');
+  //   document.getElementById('next').classList.remove('alt');
+  // }
+}
+
+function showPress(element, bodyClassName) {
+  document.body.classList.add(bodyClassName);
+  element.classList.add("active");
+  setTimeout(() => {
+    document.body.classList.remove(bodyClassName);
+    element.classList.remove("active");
+  }, 333)
+}
+
+let messageTimeout;
+function showMessage(string) {
+  clearTimeout(messageTimeout)
+  document.getElementById("message").innerText = string;
+  messageTimeout = setTimeout(() => {
+    document.getElementById("message").innerText = "";
+  }, 1000)
+}
+
+function prev(e) { post('move', e, -3) }
+function left(e) { post('move', e, -2) }
+function up(e) { post('move', e, -1) }
+function down(e) { post('move', e, 1) }
+function right(e) { post('move', e, 2) }
+function next(e) { post('move', e, 3) }
+
+function zoomIn(e) { post('zoom', e, 1) }
+function zoomOut(e) { post('zoom', e, -1) }
+
+function menu(e) { post('menu', e, 1) }
+function switchAxis(e) { post('axis', e) }
+
+let nextButton = document.getElementById('next')
+let prevButton = document.getElementById('prev')
+
+nextButton.onclick = next;
+prevButton.onclick = prev;
 // document.getElementById('menu').onclick = menu;
 
+window.onfocus = function() { document.body.classList.remove('unfocused') }
+window.onblur = function() { document.body.classList.add('unfocused') }
+
+let focusTimeout
+window.onmouseover = function() { 
+  focusTimeout = setTimeout(() => {
+    window.focus()
+  }, 222)
+ }
+window.onmouseout = function() { 
+  clearTimeout(focusTimeout)
+ }
+
 document.addEventListener('keydown', function(e) {
-    if(e.keyCode == 37) { prev(e) }
-    else if(e.keyCode == 39) { next (e) }
+  switch (e.key.toLowerCase()) {
+    case " ":
+    case "tab":
+    case "enter":
+    case "]":
+    case "n":
+      showPress(nextButton)
+      return next(e);
+
+    case "backspace":
+    case "[":
+    case "b":
+      showPress(prevButton)
+
+      return prev(e);
+
+    case "arrowright":
+    case "k":
+    case "d":
+    case "e":
+      showPress(nextButton)
+      return right(e);
+    
+    case "arrowleft": 
+    case "j": 
+    case "a": 
+      showPress(prevButton)
+      return left(e);
+
+    case "arrowup":
+    case "w":
+    case ",":
+      showPress(nextButton, "up")
+      return up(e);
+
+    case "arrowdown":
+    case "s":
+    case "o":
+      showPress(nextButton, "down")
+      return down(e);
+
+    case "+":
+    case "=":
+      showPress(nextButton, "zoomin")
+      return zoomIn(e);    
+    case "-":
+      showPress(prevButton, "zoomout")
+      return zoomOut(e);
+
+    case "x":
+      return switchAxis(e);  
+
+    case "0":
+    case "1":
+    case "2":
+    case "3":
+    case "4":
+    case "5":
+    case "6":
+    case "7":
+    case "8":
+    case "9":
+      let speed = parseInt(e.key);
+      showMessage(speed ? Math.round(((10-speed) * 111)) + "ms" : "Instant")
+      return post('speed', e, speed);
+
+    default:
+      console.debug("e.key", e.key)
+  }
 });
+window.focus()
 </script>
+</body>

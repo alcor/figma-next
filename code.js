@@ -8,10 +8,20 @@ var TransitionType;
     TransitionType[TransitionType["Passthrough"] = 1] = "Passthrough";
     TransitionType[TransitionType["Instant"] = 2] = "Instant";
 })(TransitionType || (TransitionType = {}));
+var Direction;
+(function (Direction) {
+    Direction[Direction["Prev"] = -3] = "Prev";
+    Direction[Direction["Left"] = -2] = "Left";
+    Direction[Direction["Up"] = -1] = "Up";
+    Direction[Direction["Stop"] = 0] = "Stop";
+    Direction[Direction["Down"] = 1] = "Down";
+    Direction[Direction["Right"] = 2] = "Right";
+    Direction[Direction["Next"] = 3] = "Next";
+})(Direction || (Direction = {}));
 let figjam = figma.editorType === "figjam";
 function init() {
     let compact = true;
-    figma.showUI(__html__, { visible: true, themeColors: true, width: 70, height: 40 });
+    figma.showUI(__html__, { visible: true, themeColors: true, width: 72, height: 36 });
     figma.ui.onmessage = msg => {
         if (msg.type === 'menu') {
             if (compact) {
@@ -30,10 +40,13 @@ function init() {
     loadFrames();
 }
 let cameraPath;
-let cameraFrames;
-let currentFrame = undefined; //frames[0];
+let keyframes;
+let currentKeyframe = undefined; //frames[0];
 let currentIndex = -1;
 let currentLength;
+figma.on("selectionchange", () => {
+    console.log("selectionchange", figma.currentPage.selection);
+});
 function loadFrames() {
     figma.skipInvisibleInstanceChildren = true;
     cameraPath = figma.currentPage.findChildren(node => {
@@ -45,50 +58,99 @@ function loadFrames() {
     function traverse(node) {
         for (const child of node.children) {
             let type = child.type;
+            let info = Object.assign({}, child.absoluteBoundingBox);
+            info.node = child;
             switch (child.type) {
                 case "FRAME":
                 case "SHAPE_WITH_TEXT":
                 case "STICKY":
                 case "FRAME":
-                    framesInfo.push({ node: child, rect: child.absoluteBoundingBox });
+                    framesInfo.push(info);
                     break;
                 case "SECTION":
                     if (figjam) {
-                        framesInfo.push({ node: child, rect: child.absoluteBoundingBox });
+                        framesInfo.push(info);
                     }
-                    else {
-                        traverse(child);
-                    }
+                    traverse(child);
                     sections.push(child);
                     break;
                 case "CONNECTOR":
                     connectors.push(child);
                     break;
+                case "VECTOR":
+                    // if (figjam) cameraPath = child as VectorNode;
+                    break;
                 default:
-                    console.log("Unknown Type", type);
+                    console.log("Unknown Type", type, child);
             }
         }
     }
     traverse(figma.currentPage);
     console.log("connectors", connectors, sections, framesInfo, figma.currentPage);
-    function sortFrames(a, b) {
-        if (Math.abs(a.rect.y - b.rect.y) < Math.max(a.rect.height, b.rect.height) / 2) {
-            return (a.rect.x - b.rect.x);
+    function sortFramesHorizontally(a, b) {
+        if (Math.abs(a.y - b.y) < Math.max(a.height, b.height) / 2) {
+            return (a.x - b.x);
         }
-        return (a.rect.y - b.rect.y);
+        return (a.y - b.y);
     }
-    framesInfo.sort(sortFrames);
-    cameraFrames = framesInfo.map(info => info.node);
+    function sortFramesVertically(a, b) {
+        if (Math.abs(a.x - b.x) < Math.max(a.width, b.width) / 2) {
+            return (a.y - b.y);
+        }
+        return (a.x - b.x);
+    }
+    framesInfo.sort(sortFramesVertically);
+    for (let i = 0; i < framesInfo.length; i++) {
+        let info = framesInfo[i];
+        let next = framesInfo[i + 1];
+        if (next) {
+            info.vnext = next;
+            next.vprev = info;
+        }
+    }
+    framesInfo.sort(sortFramesHorizontally);
+    for (let i = 0; i < framesInfo.length; i++) {
+        let info = framesInfo[i];
+        let next = framesInfo[i + 1];
+        if (next) {
+            info.hnext = next;
+            next.hprev = info;
+            info.hindex = i;
+        }
+    }
+    let framesInfoV = [...framesInfo];
+    keyframes = framesInfo;
     currentIndex = -1;
-    currentFrame = undefined;
-    console.log("Loaded Frames", cameraFrames, cameraPath);
+    currentKeyframe = undefined;
+    console.log("Loaded Frames", keyframes, cameraPath);
 }
+let zoomModifier = 1.0;
+let baseSpeed = 600;
 function handleMessage(msg) {
     var _a, _b;
+    console.log("\nFrom UI:", msg);
+    if (msg.type == 'zoom' && msg.direction) {
+        let oldZoomModifier = zoomModifier;
+        zoomModifier = Math.max(0.2, zoomModifier + msg.direction * 0.05);
+        console.log("Set Zoom:", zoomModifier);
+        figma.viewport.zoom *= zoomModifier / oldZoomModifier; // * lift;
+        return;
+    }
+    if (msg.type == 'axis') {
+        console.log("zoom", msg);
+        return;
+    }
+    if (msg.type == 'speed' && msg.direction != undefined) {
+        let speeds = [0, 999, 888, 777, 666, 555, 444, 333, 222, 111];
+        baseSpeed = speeds[msg.direction];
+        return;
+    }
     let transitionType = TransitionType.Stop;
-    currentLength = cameraPath ? cameraPath.vectorNetwork.vertices.length : cameraFrames.length;
-    let duration = msg.event.shift == true ? 2000 : 667;
-    let reverse = msg.type === 'prev';
+    currentLength = cameraPath ? cameraPath.vectorNetwork.vertices.length : keyframes.length;
+    let duration = msg.event.shift == true ? 2000 : baseSpeed;
+    let direction = msg.direction || Direction.Stop;
+    let vertical = direction == Direction.Up || direction == Direction.Down;
+    let reverse = (msg.direction || 0) < 0;
     if (cameraPath != null) {
         let segment = undefined;
         if (reverse) {
@@ -107,6 +169,8 @@ function handleMessage(msg) {
             currentIndex = -1;
             return;
         }
+        else {
+        }
         let vertex = cameraPath.vectorNetwork.vertices[currentIndex];
         let ox = ((_a = cameraPath.absoluteBoundingBox) === null || _a === void 0 ? void 0 : _a.x) || 0;
         let oy = ((_b = cameraPath.absoluteBoundingBox) === null || _b === void 0 ? void 0 : _b.y) || 0;
@@ -122,6 +186,8 @@ function handleMessage(msg) {
             let offset = { x: vertex.x - vertexEnd.x, y: vertex.y - vertexEnd.y };
             let types = { "MITER": TransitionType.Stop, "ROUND": TransitionType.Passthrough, "BEVEL": TransitionType.Instant };
             transitionType = types[vertex.strokeJoin || "MITER"];
+            if (figjam)
+                transitionType = TransitionType.Stop;
             let startCenter = figma.viewport.center;
             let scale;
             if (frame) {
@@ -167,22 +233,36 @@ function handleMessage(msg) {
         }
     }
     else {
-        if (msg.type === 'next') {
-            currentIndex++;
+        console.log("moving vertically from", currentKeyframe);
+        let prevNode = currentKeyframe;
+        if (currentKeyframe && vertical) {
+            currentKeyframe = reverse ? currentKeyframe.vprev : currentKeyframe.vnext;
+            if (currentKeyframe)
+                currentIndex = keyframes.indexOf(currentKeyframe);
+            console.log("moving vertically to", currentIndex, currentKeyframe);
         }
-        else if (msg.type === 'prev') {
-            currentIndex--;
+        else {
+            currentIndex += reverse ? -1 : 1;
         }
+        figma.ui.postMessage({
+            index: currentIndex,
+            length: currentLength,
+            atEnd: currentIndex == currentLength - 1,
+            pastEnd: currentIndex >= currentLength,
+            atStart: currentIndex == 0
+        });
         if (currentIndex < 0)
             currentIndex = currentLength - 1;
         if (currentIndex >= currentLength) {
             currentIndex = -1;
             return;
         }
-        currentFrame = cameraFrames[currentIndex];
-        if (currentFrame.name.endsWith("•"))
+        currentKeyframe = keyframes[currentIndex];
+        let laterFrame = reverse ? prevNode : currentKeyframe;
+        if (laterFrame && laterFrame.node.name.endsWith("•"))
             duration = 0;
-        animateToRect(currentFrame.absoluteBoundingBox, duration);
+        if (currentKeyframe.node)
+            animateToRect(currentKeyframe.node.absoluteBoundingBox, duration);
     }
 }
 ;
@@ -191,6 +271,7 @@ function pointInRect(p, rect) {
         return false;
     return p.x >= rect.x && p.x <= rect.x + rect.width && p.y >= rect.y && p.y <= rect.y + rect.height;
 }
+// 
 function animateToRect(rect, duration) {
     if (interval != null) {
         // duration = 0.0;
@@ -211,8 +292,7 @@ function animateToRect(rect, duration) {
             [endCenter.x, endCenter.y]
         ]);
     let distance = Math.sqrt(Math.pow(endCenter.x - startCenter.x, 2) + Math.pow(endCenter.y - startCenter.y, 2));
-    // duration = Math.max(200, Math.min(1000, duration * distance / 1000));
-    let startZoom = figma.viewport.zoom;
+    let startZoom = figma.viewport.zoom / zoomModifier;
     let endZoom = Math.min((figma.viewport.bounds.width * figma.viewport.zoom - padding * 2) / rect.width, (figma.viewport.bounds.height * figma.viewport.zoom - padding * 2) / rect.height) * zoomLevel;
     if (!endZoom)
         endZoom = startZoom;
@@ -239,7 +319,6 @@ function animateToRect(rect, duration) {
         };
         if (bez) {
             let [x, y] = bez(progress);
-            // console.log("BEZ", x,y,progress)
             try {
                 figma.viewport.center = { x: x || 0, y: y || 0 };
             }
@@ -251,7 +330,7 @@ function animateToRect(rect, duration) {
         let lift = Math.min(0.025, 1.0 - Math.abs(progress - 0.5)); // (Math.cos((progress - 0.5) * 2 * Math.PI) + 1)/2;
         lift = 1.0 - lift;
         let zoom = zoomFunc(progress)[0];
-        figma.viewport.zoom = zoomFunc(progress)[0]; // * lift;
+        figma.viewport.zoom = zoom * zoomModifier; // * lift;
         if (now >= end) {
             if (interval != null) {
                 clearInterval(interval);
@@ -271,7 +350,7 @@ function lerp(start, end, p, f) {
  * @returns A function that takes a parameter t between 0 and 1, and returns an array of numbers representing the point on the bezier curve at that parameter.
  */
 function bezier(pts) {
-    console.info("Creating Bezier", pts);
+    // console.verbose("Creating Bezier", pts)
     return function (t) {
         // Initialize the current set of points to the input control points.
         let a = pts;
