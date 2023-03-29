@@ -55,7 +55,18 @@ function loadFrames() {
     let framesInfo = [];
     let connectors = [];
     let sections = [];
+    function sortFramesHorizontally(a, b) {
+        if (Math.abs(a.y - b.y) < Math.max(a.height, b.height) / 2)
+            return (a.x - b.x);
+        return (a.y - b.y);
+    }
+    function sortFramesVertically(a, b) {
+        if (Math.abs(a.x - b.x) < Math.max(a.width, b.width) / 2)
+            return (a.y - b.y);
+        return (a.x - b.x);
+    }
     function traverse(node) {
+        let childFrames = [];
         for (const child of node.children) {
             let type = child.type;
             let info = Object.assign({}, child.absoluteBoundingBox);
@@ -65,13 +76,14 @@ function loadFrames() {
                 case "SHAPE_WITH_TEXT":
                 case "STICKY":
                 case "FRAME":
-                    framesInfo.push(info);
+                    childFrames.push(info);
                     break;
                 case "SECTION":
+                    info.children = traverse(child);
                     if (figjam) {
-                        framesInfo.push(info);
+                        childFrames.push(info);
                     }
-                    traverse(child);
+                    ;
                     sections.push(child);
                     break;
                 case "CONNECTOR":
@@ -84,42 +96,41 @@ function loadFrames() {
                     console.log("Unknown Type", type, child);
             }
         }
+        return childFrames;
     }
-    traverse(figma.currentPage);
+    framesInfo = traverse(figma.currentPage);
     console.log("connectors", connectors, sections, framesInfo, figma.currentPage);
-    function sortFramesHorizontally(a, b) {
-        if (Math.abs(a.y - b.y) < Math.max(a.height, b.height) / 2) {
-            return (a.x - b.x);
-        }
-        return (a.y - b.y);
+    function sortAndFlatten(frames, sortFn) {
+        let children = [];
+        frames.sort(sortFn);
+        frames.forEach(frame => {
+            children.push(frame);
+            if (frame.children) {
+                children = children.concat(sortAndFlatten(frame.children, sortFn));
+            }
+        });
+        return children;
     }
-    function sortFramesVertically(a, b) {
-        if (Math.abs(a.x - b.x) < Math.max(a.width, b.width) / 2) {
-            return (a.y - b.y);
-        }
-        return (a.x - b.x);
-    }
-    framesInfo.sort(sortFramesVertically);
-    for (let i = 0; i < framesInfo.length; i++) {
-        let info = framesInfo[i];
-        let next = framesInfo[i + 1];
+    let vertFrames = sortAndFlatten(framesInfo, sortFramesVertically);
+    for (let i = 0; i < vertFrames.length; i++) {
+        let info = vertFrames[i];
+        let next = vertFrames[i + 1];
         if (next) {
             info.vnext = next;
             next.vprev = info;
         }
     }
-    framesInfo.sort(sortFramesHorizontally);
-    for (let i = 0; i < framesInfo.length; i++) {
-        let info = framesInfo[i];
-        let next = framesInfo[i + 1];
+    let horizFrames = sortAndFlatten(framesInfo, sortFramesHorizontally);
+    for (let i = 0; i < horizFrames.length; i++) {
+        let info = horizFrames[i];
+        let next = horizFrames[i + 1];
         if (next) {
             info.hnext = next;
             next.hprev = info;
             info.hindex = i;
         }
     }
-    let framesInfoV = [...framesInfo];
-    keyframes = framesInfo;
+    keyframes = horizFrames;
     currentIndex = -1;
     currentKeyframe = undefined;
     console.log("Loaded Frames", keyframes, cameraPath);
