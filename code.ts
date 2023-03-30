@@ -29,6 +29,8 @@ interface Keyframe {
 }
 
 let figjam = figma.editorType === "figjam";
+let zoomModifier = 1.0
+let baseSpeed = 600
 
 function init() {
   let compact = true;
@@ -65,7 +67,7 @@ figma.on("selectionchange", () => {
 
 function loadFrames() {
   figma.skipInvisibleInstanceChildren = true
-
+  
   cameraPath = (figma.currentPage.findChildren(node => { 
     return node.type === "VECTOR" && (node.name.toLowerCase() == "journey" || node.name.toLowerCase() == "camera") 
   }).pop() as VectorNode);
@@ -94,6 +96,10 @@ function loadFrames() {
         case "FRAME":
         case "SHAPE_WITH_TEXT":
         case "STICKY":
+        case "TABLE":
+        case "LINK_UNFURL":
+        case "INSTANCE":
+        case "WIDGET":
         case "FRAME":
           childFrames.push(info);
           break
@@ -158,12 +164,20 @@ function loadFrames() {
   currentIndex = -1
   currentKeyframe = undefined;
 
+  let description = (keyframes.length.toString() + " frames");
+  if (cameraPath) description = cameraPath.vectorNetwork.vertices.length.toString() + " points";
   console.log("Loaded Frames", keyframes, cameraPath)
+
+  
+  figma.currentPage.setPluginData("speed", baseSpeed.toString());
+  baseSpeed = parseInt(figma.currentPage.getPluginData("speed")) || 600
+  console.log("base speed", baseSpeed)
+  figma.currentPage.setRelaunchData({ 
+    show: description
+  });
 
 }
 
-let zoomModifier = 1.0
-let baseSpeed = 600
 
 function handleMessage(msg: { type: string; event: {alt: boolean, ctrl: boolean, shift: boolean, time?:number}, direction?:number }) {
   console.log("\nFrom UI:", msg)
@@ -172,6 +186,7 @@ function handleMessage(msg: { type: string; event: {alt: boolean, ctrl: boolean,
     zoomModifier = Math.max(0.2, zoomModifier + msg.direction * 0.05)
     console.log("Set Zoom:", zoomModifier)
     figma.viewport.zoom *= zoomModifier / oldZoomModifier;// * lift;
+    figma.currentPage.setPluginData("zoom", zoomModifier.toString());
     return;
   }
 
@@ -183,6 +198,8 @@ function handleMessage(msg: { type: string; event: {alt: boolean, ctrl: boolean,
   if (msg.type == 'speed' && msg.direction != undefined) { 
     let speeds = [0, 999, 888, 777, 666, 555, 444, 333, 222, 111]
     baseSpeed = speeds[msg.direction];
+    figma.currentPage.setPluginData("speed", baseSpeed.toString());
+    console.log("set speed ",baseSpeed.toString())
     return;
   }
   

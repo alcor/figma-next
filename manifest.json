@@ -9,5 +9,8 @@
     "figma",
     "figjam"
   ],
+  "relaunchButtons": [
+    { "command": "show", "name": "Next ↔"}
+  ],
   "ui": "ui.html"
 }

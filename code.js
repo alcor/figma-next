@@ -19,6 +19,8 @@ var Direction;
     Direction[Direction["Next"] = 3] = "Next";
 })(Direction || (Direction = {}));
 let figjam = figma.editorType === "figjam";
+let zoomModifier = 1.0;
+let baseSpeed = 600;
 function init() {
     let compact = true;
     figma.showUI(__html__, { visible: true, themeColors: true, width: 72, height: 36 });
@@ -75,6 +77,10 @@ function loadFrames() {
                 case "FRAME":
                 case "SHAPE_WITH_TEXT":
                 case "STICKY":
+                case "TABLE":
+                case "LINK_UNFURL":
+                case "INSTANCE":
+                case "WIDGET":
                 case "FRAME":
                     childFrames.push(info);
                     break;
@@ -133,10 +139,17 @@ function loadFrames() {
     keyframes = horizFrames;
     currentIndex = -1;
     currentKeyframe = undefined;
+    let description = (keyframes.length.toString() + " frames");
+    if (cameraPath)
+        description = cameraPath.vectorNetwork.vertices.length.toString() + " points";
     console.log("Loaded Frames", keyframes, cameraPath);
+    figma.currentPage.setPluginData("speed", baseSpeed.toString());
+    baseSpeed = parseInt(figma.currentPage.getPluginData("speed")) || 600;
+    console.log("base speed", baseSpeed);
+    figma.currentPage.setRelaunchData({
+        show: description
+    });
 }
-let zoomModifier = 1.0;
-let baseSpeed = 600;
 function handleMessage(msg) {
     var _a, _b;
     console.log("\nFrom UI:", msg);
@@ -145,6 +158,7 @@ function handleMessage(msg) {
         zoomModifier = Math.max(0.2, zoomModifier + msg.direction * 0.05);
         console.log("Set Zoom:", zoomModifier);
         figma.viewport.zoom *= zoomModifier / oldZoomModifier; // * lift;
+        figma.currentPage.setPluginData("zoom", zoomModifier.toString());
         return;
     }
     if (msg.type == 'axis') {
@@ -154,6 +168,8 @@ function handleMessage(msg) {
     if (msg.type == 'speed' && msg.direction != undefined) {
         let speeds = [0, 999, 888, 777, 666, 555, 444, 333, 222, 111];
         baseSpeed = speeds[msg.direction];
+        figma.currentPage.setPluginData("speed", baseSpeed.toString());
+        console.log("set speed ", baseSpeed.toString());
         return;
     }
     let transitionType = TransitionType.Stop;
