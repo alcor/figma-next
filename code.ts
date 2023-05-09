@@ -72,7 +72,6 @@ let currentLength;
 figma.on("selectionchange", () => { 
   let selection = figma.currentPage.selection[0];
 
-  console.log("selection", selection)
   if (selection) {
     while (selection.parent.type != "PAGE"  && selection.parent.type != "SECTION") {
       console.log("selection", selection.parent, selection.parent?.type)
