@@ -17,6 +17,13 @@ enum Direction {
   Next = 3
 }
 
+let DirectionMap: {[k: string]: string} = {
+  "1": "BOTTOM",
+  "-1": "TOP",
+  "2": "RIGHT",
+  "-2": "LEFT"
+}
+
 interface Keyframe { 
   node?: SceneNode;
   x: any; y: any; 
@@ -24,6 +31,7 @@ interface Keyframe {
   tangentStart?: any; tangentEnd?: any;
   vnext?: Keyframe; vprev?: Keyframe; 
   hnext?: Keyframe; hprev?: Keyframe;
+  connections?: {[k: string]: Keyframe};
   hindex?:number;
   children?: Keyframe[];
 }
@@ -62,7 +70,37 @@ let currentIndex = -1;
 let currentLength;
 
 figma.on("selectionchange", () => { 
-  console.log("selectionchange", figma.currentPage.selection)
+  let selection = figma.currentPage.selection[0];
+
+  console.log("selection", selection)
+  if (selection) {
+    while (selection.parent.type != "PAGE"  && selection.parent.type != "SECTION") {
+      console.log("selection", selection.parent, selection.parent?.type)
+      if (selection.parent) selection = selection.parent as SceneNode;
+    }
+  }
+
+  keyframes.forEach(keyframe => {
+    if (selection === keyframe.node) {
+      currentKeyframe = keyframe;
+      if (cameraPath) {      
+        let ox = cameraPath.absoluteBoundingBox?.x || 0;
+        let oy = cameraPath.absoluteBoundingBox?.y || 0;
+        cameraPath.vectorNetwork.vertices.forEach((vertex, i) => {
+          let x = vertex.x + ox;
+          let y = vertex.y + oy;
+          if (pointInRect({x, y}, selection.absoluteBoundingBox)) {
+            currentIndex = i;
+          }
+
+        })
+      } else {
+        currentIndex = keyframes.indexOf(keyframe);
+      }
+      console.log("Selecting index: ", currentIndex, keyframe)
+      return true;
+    }
+  })
 })
 
 function loadFrames() {
@@ -138,9 +176,12 @@ function loadFrames() {
     return children;
   }
 
+  let framesById: {[k: string]: Keyframe} = {}
   let vertFrames = sortAndFlatten(framesInfo, sortFramesVertically);
   for (let i = 0; i < vertFrames.length; i++) {
     let info = vertFrames[i];
+    let id = info.node?.id;
+    if (id) framesById[id] = info;
     let next = vertFrames[i + 1];
     if (next) {
       info.vnext = next;
@@ -157,6 +198,32 @@ function loadFrames() {
       next.hprev = info;
       info.hindex = i;
     }
+
+    info.connections = {};
+    interface Directions {[k: string]: Keyframe;}
+    
+    // let connections = info.node?.attachedConnectors.forEach(connector => {
+    //   let endpoint = connector.connectorStart as ConnectorEndpointEndpointNodeIdAndMagnet;
+    //   if (endpoint.endpointNodeId == info.node?.id) {
+    //     let id = (connector.connectorEnd as ConnectorEndpointEndpointNodeIdAndMagnet).endpointNodeId;
+    //     if (info.connections) info.connections[endpoint.magnet as string] = framesById[id];
+    //   }
+
+    //   endpoint = connector.connectorEnd as ConnectorEndpointEndpointNodeIdAndMagnet;
+    //   if (endpoint.endpointNodeId == info.node?.id) {
+    //     let id =  (connector.connectorStart as ConnectorEndpointEndpointNodeIdAndMagnet).endpointNodeId;
+    //     if (info.connections) info.connections[endpoint.magnet as string] = framesById[id];
+    //   }
+    // })
+    
+    // if (info.connections.length) console.log("connections", info.connections)
+    // let currentNodeInfo = currentKeyframe?.node;
+    // if (currentNodeInfo) {
+    // let nextNodeConnector = currentNodeInfo?.attachedConnectors?.find(connector => {
+    //   let endpoint = connector.connectorStart as ConnectorEndpointEndpointNodeIdAndMagnet;
+    //   return endpoint.endpointNodeId == currentNodeInfo?.id 
+    //   && endpoint.magnet == "RIGHT";
+    // });
   }
 
   keyframes = horizFrames;
@@ -168,7 +235,6 @@ function loadFrames() {
   if (cameraPath) description = cameraPath.vectorNetwork.vertices.length.toString() + " points";
   console.log("Loaded Frames", keyframes, cameraPath)
 
-  
   figma.currentPage.setPluginData("speed", baseSpeed.toString());
   baseSpeed = parseInt(figma.currentPage.getPluginData("speed")) || 600
   console.log("base speed", baseSpeed)
@@ -213,6 +279,8 @@ function handleMessage(msg: { type: string; event: {alt: boolean, ctrl: boolean,
   let vertical = direction == Direction.Up || direction == Direction.Down
   let reverse = (msg.direction || 0) < 0
 
+  figma.currentPage.selection = [];
+
   if (cameraPath != null) {
 
     let segment = undefined;
@@ -231,6 +299,7 @@ function handleMessage(msg: { type: string; event: {alt: boolean, ctrl: boolean,
     } else {
     }
 
+    console.log("New Index:", currentIndex)
     let vertex = cameraPath.vectorNetwork.vertices[currentIndex];
     
     let ox = cameraPath.absoluteBoundingBox?.x || 0;
@@ -302,14 +371,36 @@ function handleMessage(msg: { type: string; event: {alt: boolean, ctrl: boolean,
     }
 
   } else {
-
-    console.log("moving vertically from", currentKeyframe)
-
     let prevNode: any = currentKeyframe;
-    if (currentKeyframe && vertical) {
+    
+    let nextKeyframe: Keyframe | undefined;
+
+    let magnet = DirectionMap[direction as unknown as string];
+    let currentNodeInfo = currentKeyframe?.node;
+    if (currentNodeInfo) {
+      console.log("finding connector", magnet, direction, currentNodeInfo?.attachedConnectors )
+    let nextNodeConnector = currentNodeInfo?.attachedConnectors?.forEach(connector => {
+      let start = connector.connectorStart as ConnectorEndpointEndpointNodeIdAndMagnet;
+      let end = connector.connectorEnd as ConnectorEndpointEndpointNodeIdAndMagnet;
+
+      if (start.endpointNodeId == currentNodeInfo?.id && start.magnet == magnet) {
+        console.log("x keyframe", start)
+
+        nextKeyframe = keyframes.find(keyframe => keyframe.node?.id == end.endpointNodeId) 
+      } 
+      if (end.endpointNodeId == currentNodeInfo?.id && end.magnet == magnet) {
+        console.log("y keyframe", start)
+
+        nextKeyframe = keyframes.find(keyframe => keyframe.node?.id == start.endpointNodeId)
+      }
+    });
+
+  }
+    if (nextKeyframe) {
+      currentIndex = keyframes.indexOf(nextKeyframe);
+    } else if (currentKeyframe && vertical) {
       currentKeyframe = reverse ? currentKeyframe.vprev : currentKeyframe.vnext;
       if (currentKeyframe) currentIndex = keyframes.indexOf(currentKeyframe);
-      console.log("moving vertically to", currentIndex, currentKeyframe)
     } else {
       currentIndex += reverse ? -1 : 1;
     }

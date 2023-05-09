@@ -18,6 +18,12 @@ var Direction;
     Direction[Direction["Right"] = 2] = "Right";
     Direction[Direction["Next"] = 3] = "Next";
 })(Direction || (Direction = {}));
+let DirectionMap = {
+    "1": "BOTTOM",
+    "-1": "TOP",
+    "2": "RIGHT",
+    "-2": "LEFT"
+};
 let figjam = figma.editorType === "figjam";
 let zoomModifier = 1.0;
 let baseSpeed = 600;
@@ -47,9 +53,41 @@ let currentKeyframe = undefined; //frames[0];
 let currentIndex = -1;
 let currentLength;
 figma.on("selectionchange", () => {
-    console.log("selectionchange", figma.currentPage.selection);
+    var _a;
+    let selection = figma.currentPage.selection[0];
+    console.log("selection", selection);
+    if (selection) {
+        while (selection.parent.type != "PAGE" && selection.parent.type != "SECTION") {
+            console.log("selection", selection.parent, (_a = selection.parent) === null || _a === void 0 ? void 0 : _a.type);
+            if (selection.parent)
+                selection = selection.parent;
+        }
+    }
+    keyframes.forEach(keyframe => {
+        var _a, _b;
+        if (selection === keyframe.node) {
+            currentKeyframe = keyframe;
+            if (cameraPath) {
+                let ox = ((_a = cameraPath.absoluteBoundingBox) === null || _a === void 0 ? void 0 : _a.x) || 0;
+                let oy = ((_b = cameraPath.absoluteBoundingBox) === null || _b === void 0 ? void 0 : _b.y) || 0;
+                cameraPath.vectorNetwork.vertices.forEach((vertex, i) => {
+                    let x = vertex.x + ox;
+                    let y = vertex.y + oy;
+                    if (pointInRect({ x, y }, selection.absoluteBoundingBox)) {
+                        currentIndex = i;
+                    }
+                });
+            }
+            else {
+                currentIndex = keyframes.indexOf(keyframe);
+            }
+            console.log("Selecting index: ", currentIndex, keyframe);
+            return true;
+        }
+    });
 });
 function loadFrames() {
+    var _a;
     figma.skipInvisibleInstanceChildren = true;
     cameraPath = figma.currentPage.findChildren(node => {
         return node.type === "VECTOR" && (node.name.toLowerCase() == "journey" || node.name.toLowerCase() == "camera");
@@ -117,9 +155,13 @@ function loadFrames() {
         });
         return children;
     }
+    let framesById = {};
     let vertFrames = sortAndFlatten(framesInfo, sortFramesVertically);
     for (let i = 0; i < vertFrames.length; i++) {
         let info = vertFrames[i];
+        let id = (_a = info.node) === null || _a === void 0 ? void 0 : _a.id;
+        if (id)
+            framesById[id] = info;
         let next = vertFrames[i + 1];
         if (next) {
             info.vnext = next;
@@ -135,6 +177,27 @@ function loadFrames() {
             next.hprev = info;
             info.hindex = i;
         }
+        info.connections = {};
+        // let connections = info.node?.attachedConnectors.forEach(connector => {
+        //   let endpoint = connector.connectorStart as ConnectorEndpointEndpointNodeIdAndMagnet;
+        //   if (endpoint.endpointNodeId == info.node?.id) {
+        //     let id = (connector.connectorEnd as ConnectorEndpointEndpointNodeIdAndMagnet).endpointNodeId;
+        //     if (info.connections) info.connections[endpoint.magnet as string] = framesById[id];
+        //   }
+        //   endpoint = connector.connectorEnd as ConnectorEndpointEndpointNodeIdAndMagnet;
+        //   if (endpoint.endpointNodeId == info.node?.id) {
+        //     let id =  (connector.connectorStart as ConnectorEndpointEndpointNodeIdAndMagnet).endpointNodeId;
+        //     if (info.connections) info.connections[endpoint.magnet as string] = framesById[id];
+        //   }
+        // })
+        // if (info.connections.length) console.log("connections", info.connections)
+        // let currentNodeInfo = currentKeyframe?.node;
+        // if (currentNodeInfo) {
+        // let nextNodeConnector = currentNodeInfo?.attachedConnectors?.find(connector => {
+        //   let endpoint = connector.connectorStart as ConnectorEndpointEndpointNodeIdAndMagnet;
+        //   return endpoint.endpointNodeId == currentNodeInfo?.id 
+        //   && endpoint.magnet == "RIGHT";
+        // });
     }
     keyframes = horizFrames;
     currentIndex = -1;
@@ -151,7 +214,7 @@ function loadFrames() {
     });
 }
 function handleMessage(msg) {
-    var _a, _b;
+    var _a, _b, _c;
     console.log("\nFrom UI:", msg);
     if (msg.type == 'zoom' && msg.direction) {
         let oldZoomModifier = zoomModifier;
@@ -178,6 +241,7 @@ function handleMessage(msg) {
     let direction = msg.direction || Direction.Stop;
     let vertical = direction == Direction.Up || direction == Direction.Down;
     let reverse = (msg.direction || 0) < 0;
+    figma.currentPage.selection = [];
     if (cameraPath != null) {
         let segment = undefined;
         if (reverse) {
@@ -198,6 +262,7 @@ function handleMessage(msg) {
         }
         else {
         }
+        console.log("New Index:", currentIndex);
         let vertex = cameraPath.vectorNetwork.vertices[currentIndex];
         let ox = ((_a = cameraPath.absoluteBoundingBox) === null || _a === void 0 ? void 0 : _a.x) || 0;
         let oy = ((_b = cameraPath.absoluteBoundingBox) === null || _b === void 0 ? void 0 : _b.y) || 0;
@@ -260,13 +325,32 @@ function handleMessage(msg) {
         }
     }
     else {
-        console.log("moving vertically from", currentKeyframe);
         let prevNode = currentKeyframe;
-        if (currentKeyframe && vertical) {
+        let nextKeyframe;
+        let magnet = DirectionMap[direction];
+        let currentNodeInfo = currentKeyframe === null || currentKeyframe === void 0 ? void 0 : currentKeyframe.node;
+        if (currentNodeInfo) {
+            console.log("finding connector", magnet, direction, currentNodeInfo === null || currentNodeInfo === void 0 ? void 0 : currentNodeInfo.attachedConnectors);
+            let nextNodeConnector = (_c = currentNodeInfo === null || currentNodeInfo === void 0 ? void 0 : currentNodeInfo.attachedConnectors) === null || _c === void 0 ? void 0 : _c.forEach(connector => {
+                let start = connector.connectorStart;
+                let end = connector.connectorEnd;
+                if (start.endpointNodeId == (currentNodeInfo === null || currentNodeInfo === void 0 ? void 0 : currentNodeInfo.id) && start.magnet == magnet) {
+                    console.log("x keyframe", start);
+                    nextKeyframe = keyframes.find(keyframe => { var _a; return ((_a = keyframe.node) === null || _a === void 0 ? void 0 : _a.id) == end.endpointNodeId; });
+                }
+                if (end.endpointNodeId == (currentNodeInfo === null || currentNodeInfo === void 0 ? void 0 : currentNodeInfo.id) && end.magnet == magnet) {
+                    console.log("y keyframe", start);
+                    nextKeyframe = keyframes.find(keyframe => { var _a; return ((_a = keyframe.node) === null || _a === void 0 ? void 0 : _a.id) == start.endpointNodeId; });
+                }
+            });
+        }
+        if (nextKeyframe) {
+            currentIndex = keyframes.indexOf(nextKeyframe);
+        }
+        else if (currentKeyframe && vertical) {
             currentKeyframe = reverse ? currentKeyframe.vprev : currentKeyframe.vnext;
             if (currentKeyframe)
                 currentIndex = keyframes.indexOf(currentKeyframe);
-            console.log("moving vertically to", currentIndex, currentKeyframe);
         }
         else {
             currentIndex += reverse ? -1 : 1;
