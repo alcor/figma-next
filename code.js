@@ -126,6 +126,9 @@ function loadFrames() {
                     if (figjam) {
                         childFrames.push(info);
                     }
+                    else {
+                        childFrames = childFrames.concat(info.children);
+                    }
                     ;
                     sections.push(child);
                     break;
@@ -236,6 +239,10 @@ function handleMessage(msg) {
     }
     let transitionType = TransitionType.Stop;
     currentLength = cameraPath ? cameraPath.vectorNetwork.vertices.length : keyframes.length;
+    if (currentLength === 0) {
+        figma.notify("No frames or camera points on this page.");
+        return;
+    }
     let duration = msg.event.shift == true ? 2000 : baseSpeed;
     let direction = msg.direction || Direction.Stop;
     let vertical = direction == Direction.Up || direction == Direction.Down;

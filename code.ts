@@ -144,6 +144,8 @@ function loadFrames() {
           info.children = traverse(child as SectionNode);
           if (figjam) {
             childFrames.push(info);
+          } else {
+            childFrames = childFrames.concat(info.children);
           };
           sections.push(child as SectionNode)
           break
@@ -271,6 +273,10 @@ function handleMessage(msg: { type: string; event: {alt: boolean, ctrl: boolean,
   
   let transitionType = TransitionType.Stop;
   currentLength = cameraPath ? cameraPath.vectorNetwork.vertices.length : keyframes.length;
+  if (currentLength === 0) {
+    figma.notify("No frames or camera points on this page.");
+    return;
+  }
 
   let duration = msg.event.shift == true ? 2000 : baseSpeed;
 
